@@ -1,0 +1,19 @@
+{
+  "name": "OPS Command · Túnel Oriente",
+  "short_name": "OPS Command",
+  "description": "Centro de gestión operativa 24/7 — Túnel Oriente",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#00152b",
+  "theme_color": "#e8831a",
+  "lang": "es",
+  "icons": [
+    { "src": "icons/icon-32.png",  "sizes": "32x32",   "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-180.png", "sizes": "180x180", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "categories": ["productivity", "utilities"],
+  "prefer_related_applications": false
+}

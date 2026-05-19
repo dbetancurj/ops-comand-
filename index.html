@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="OPS Command">
+<meta name="theme-color" content="#e8831a">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
+<title>OPS Command · Túnel Oriente 24/7</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#00152b; --surface:#001e3c; --surface2:#002a52; --surface3:#003366;
+  --border:#0a3a5e; --border2:#1a4f7a;
+  --orange:#e8831a; --orange2:#f5a623; --orange-dim:#e8831a18; --orange-mid:#e8831a40;
+  --blue:#4db8e8; --blue-dim:#4db8e818;
+  --done:#2ec4a9; --done-dim:#2ec4a918;
+  --progress:#f5c842; --progress-dim:#f5c84218;
+  --todo:#4a6080; --todo-dim:#4a608020;
+  --ops:#4db8e8; --ops-dim:#4db8e814; --ops-mid:#4db8e840;
+  --emg:#e8831a; --emg-dim:#e8831a14; --emg-mid:#e8831a40;
+  --seg:#f5c842; --seg-dim:#f5c84214; --seg-mid:#f5c84240;
+  --p0:#ef4444; --p1:#e8831a; --p2:#4db8e8; --p3:#4a6080;
+  --td:#f5c842; --tn:#9b8fff; --tr:#1a2e42;
+  --ga:#4db8e8; --gb:#f5a623; --gc:#a78bfa;
+  --text:#c8ddf0; --text2:#6a90b0; --text3:#2e5070; --white:#f0f7ff;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bot:env(safe-area-inset-bottom,0px);
+  --safe-l:env(safe-area-inset-left,0px);
+  --safe-r:env(safe-area-inset-right,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overscroll-behavior:none;}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:14px;-webkit-text-size-adjust:100%;}
+
+/* ── TOPBAR ── */
+.topbar{background:var(--surface);border-bottom:2px solid var(--orange);height:calc(56px + var(--safe-top));display:flex;align-items:flex-end;position:sticky;top:0;z-index:100;padding:0 1.5rem;}
+.topbar-inner{display:flex;align-items:center;gap:1.2rem;width:100%;height:56px;}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:1.25rem;letter-spacing:.14em;color:var(--white);display:flex;align-items:center;gap:.5rem;flex-shrink:0;}
+.logo-accent{color:var(--orange2);}
+.logo-dot{width:7px;height:7px;border-radius:50%;background:var(--orange);animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.sync-indicator{display:flex;align-items:center;gap:.4rem;font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--text3);padding-left:1rem;border-left:1px solid var(--border2);}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--todo);transition:background .3s;}
+.sync-dot.online{background:var(--done);}
+.sync-dot.syncing{background:var(--progress);animation:blink .6s infinite;}
+.topbar-nav{display:flex;gap:.18rem;margin-left:auto;}
+.nav-btn{background:none;border:1px solid transparent;color:var(--text2);font-family:'IBM Plex Mono',monospace;font-size:.6rem;letter-spacing:.07em;padding:.38rem .78rem;border-radius:3px;cursor:pointer;text-transform:uppercase;transition:all .15s;white-space:nowrap;min-height:34px;}
+.nav-btn:hover{color:var(--white);border-color:var(--border2);}
+.nav-btn.active{color:var(--orange2);border-color:var(--orange-mid);background:var(--orange-dim);}
+
+/* ── LAYOUT ── */
+.main{padding:1.4rem 1.5rem calc(1.4rem + var(--safe-bot));}
+.view{display:none;}.view.active{display:block;}
+.sec-header{display:flex;align-items:center;gap:.85rem;margin-bottom:1.1rem;}
+.sec-title{font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:.14em;color:var(--white);white-space:nowrap;}
+.sec-line{flex:1;height:1px;background:var(--border);}
+
+/* ── LOADING ── */
+.loading-screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;z-index:999;}
+.loading-screen.hidden{display:none;}
+.loading-logo{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:.2em;color:var(--white);}
+.loading-logo span{color:var(--orange);}
+.loading-bar{width:200px;height:3px;background:var(--border2);border-radius:2px;overflow:hidden;}
+.loading-fill{height:100%;background:var(--orange);border-radius:2px;animation:loadfill 1.5s ease-in-out infinite;}
+@keyframes loadfill{0%{width:0%;margin-left:0}50%{width:60%;margin-left:20%}100%{width:0%;margin-left:100%}}
+.loading-msg{font-family:'IBM Plex Mono',monospace;font-size:.65rem;color:var(--text3);letter-spacing:.1em;}
+
+/* ── STATS ── */
+.stats-row{display:flex;gap:.65rem;margin-bottom:1.4rem;flex-wrap:wrap;}
+.stat-card{flex:1;min-width:75px;background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:.75rem .9rem;}
+.stat-value{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:.05em;line-height:1;color:var(--white);}
+.stat-label{font-family:'IBM Plex Mono',monospace;font-size:.5rem;letter-spacing:.09em;text-transform:uppercase;color:var(--text3);margin-top:.14rem;}
+.stat-card.ops-s .stat-value{color:var(--ops);}
+.stat-card.emg-s .stat-value{color:var(--emg);}
+.stat-card.seg-s .stat-value{color:var(--seg);}
+.stat-card.done-s .stat-value{color:var(--done);}
+
+/* ── SPRINT BOARD (vista de sprints) ── */
+.sprint-board{display:flex;flex-direction:column;gap:1.25rem;margin-bottom:1.5rem;}
+.sprint-block{background:var(--surface);border:1px solid var(--border);border-radius:5px;overflow:hidden;}
+.sprint-block-header{padding:.85rem 1.1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.85rem;background:var(--surface2);cursor:pointer;user-select:none;}
+.sprint-block-header:active{background:var(--surface3);}
+.sprint-number{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.12em;color:var(--orange2);}
+.sprint-dates{font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--text3);}
+.sprint-toggle{margin-left:auto;color:var(--text3);font-size:.75rem;transition:transform .2s;}
+.sprint-toggle.open{transform:rotate(180deg);}
+.sprint-progress-wrap{flex:1;max-width:180px;}
+.sprint-prog-bar{height:4px;background:var(--border2);border-radius:2px;overflow:hidden;margin-top:.25rem;}
+.sprint-prog-fill{height:100%;background:var(--orange);border-radius:2px;transition:width .4s;}
+.sprint-prog-label{font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--text3);}
+.sprint-status-badge{font-family:'IBM Plex Mono',monospace;font-size:.56rem;padding:.18rem .55rem;border-radius:2px;text-transform:uppercase;letter-spacing:.06em;}
+.badge-active{background:var(--orange-dim);color:var(--orange2);border:1px solid var(--orange-mid);}
+.badge-done{background:var(--done-dim);color:var(--done);border:1px solid var(--done);}
+.badge-upcoming{background:var(--surface3);color:var(--text2);border:1px solid var(--border2);}
+
+.sprint-tasks-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1px solid var(--border);}
+.sprint-col{border-right:1px solid var(--border);padding:.75rem;}
+.sprint-col:last-child{border-right:none;}
+.sprint-col-header{font-family:'IBM Plex Mono',monospace;font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:.6rem;display:flex;align-items:center;gap:.4rem;}
+.sprint-col-dot{width:6px;height:6px;border-radius:50%;}
+
+/* ── TASK CARD ── */
+.task-card{background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:.65rem .7rem;margin-bottom:.38rem;cursor:pointer;transition:all .15s;position:relative;}
+.task-card:active{background:var(--surface3);}
+.task-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;border-radius:3px 0 0 3px;}
+.task-card.status-todo::before{background:var(--todo);}
+.task-card.status-progress::before{background:var(--progress);}
+.task-card.status-done::before{background:var(--done);}
+.task-top{display:flex;align-items:flex-start;gap:.4rem;margin-bottom:.3rem;}
+.task-prio{font-family:'IBM Plex Mono',monospace;font-size:.48rem;padding:.08rem .32rem;border-radius:2px;flex-shrink:0;margin-top:.06rem;text-transform:uppercase;letter-spacing:.05em;}
+.p0{background:#ef444420;color:var(--p0);} .p1{background:#e8831a20;color:var(--p1);}
+.p2{background:#4db8e820;color:var(--p2);} .p3{background:#4a608020;color:var(--p3);}
+.task-title{font-size:.73rem;font-weight:500;color:var(--white);line-height:1.35;flex:1;}
+.task-meta{display:flex;align-items:center;gap:.38rem;flex-wrap:wrap;}
+.task-status-badge{font-family:'IBM Plex Mono',monospace;font-size:.52rem;padding:.08rem .38rem;border-radius:2px;text-transform:uppercase;letter-spacing:.05em;}
+.status-todo .task-status-badge{background:var(--todo-dim);color:var(--todo);}
+.status-progress .task-status-badge{background:var(--progress-dim);color:var(--progress);}
+.status-done .task-status-badge{background:var(--done-dim);color:var(--done);}
+.task-leader-tag{font-family:'IBM Plex Mono',monospace;font-size:.5rem;padding:.06rem .32rem;border-radius:2px;}
+.tl-ops{background:var(--ops-dim);color:var(--ops);}
+.tl-emg{background:var(--emg-dim);color:var(--emg);}
+.tl-seg{background:var(--seg-dim);color:var(--seg);}
+.task-delegation-tag{font-family:'IBM Plex Mono',monospace;font-size:.48rem;padding:.06rem .3rem;border-radius:2px;background:var(--surface3);color:var(--text2);}
+
+.add-task-btn{width:100%;background:none;border:1px dashed var(--border2);border-radius:3px;color:var(--text3);padding:.5rem;font-family:'IBM Plex Sans',sans-serif;font-size:.68rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.35rem;margin-top:.15rem;min-height:38px;transition:all .15s;}
+.add-task-btn:active{color:var(--orange2);border-color:var(--orange-mid);}
+
+/* ── CYCLE BOX ── */
+.cycle-box{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:1rem 1.2rem;margin-bottom:1.4rem;}
+.cycle-intro{font-size:.7rem;color:var(--text2);margin-bottom:.9rem;line-height:1.5;}
+.cycle-intro strong{color:var(--white);}
+.cycle-group-row{margin-bottom:.8rem;}
+.cycle-group-label{font-family:'Bebas Neue',sans-serif;font-size:.8rem;letter-spacing:.12em;margin-bottom:.28rem;display:flex;align-items:center;gap:.45rem;}
+.cycle-strip{display:flex;gap:2px;overflow-x:auto;padding-bottom:3px;}
+.cc{min-width:26px;height:26px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:.46rem;font-weight:600;flex-shrink:0;position:relative;cursor:default;}
+.cc.today-cell{outline:2px solid var(--orange);outline-offset:1px;z-index:1;}
+.cc-d{background:var(--td);color:#1a1200;} .cc-n{background:var(--tn);color:#0d0a1a;} .cc-r{background:var(--tr);color:var(--text2);}
+.cc-num{position:absolute;bottom:2px;font-size:.34rem;opacity:.55;}
+.cycle-legend{display:flex;gap:1.1rem;flex-wrap:wrap;margin-top:.85rem;padding-top:.7rem;border-top:1px solid var(--border);}
+.cl-item{display:flex;align-items:center;gap:.38rem;font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--text2);}
+.cl-dot{width:11px;height:11px;border-radius:2px;}
+
+/* ── SHIFT BANNER ── */
+.shift-banner{display:grid;grid-template-columns:repeat(3,1fr);gap:.85rem;margin-bottom:1.4rem;}
+.shift-card{border:1px solid var(--border);border-radius:4px;padding:.9rem 1.1rem;position:relative;overflow:hidden;background:var(--surface);}
+.shift-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:3px;}
+.ops-card::before{background:var(--ops);} .emg-card::before{background:var(--emg);} .seg-card::before{background:var(--seg);}
+.shift-area-lbl{font-family:'IBM Plex Mono',monospace;font-size:.56rem;letter-spacing:.14em;text-transform:uppercase;margin-bottom:.3rem;}
+.ops-card .shift-area-lbl{color:var(--ops);} .emg-card .shift-area-lbl{color:var(--emg);} .seg-card .shift-area-lbl{color:var(--seg);}
+.shift-leader-name{font-size:.88rem;font-weight:600;color:var(--white);margin-bottom:.45rem;}
+.groups-today{display:flex;flex-direction:column;gap:.3rem;}
+.group-today-row{display:flex;align-items:center;justify-content:space-between;padding:.26rem .45rem;border-radius:3px;background:var(--surface2);}
+.gt-label{font-family:'Bebas Neue',sans-serif;font-size:.75rem;letter-spacing:.1em;}
+.gt-label.ga{color:var(--ga);} .gt-label.gb{color:var(--gb);} .gt-label.gc{color:var(--gc);}
+.gt-badge{font-family:'IBM Plex Mono',monospace;font-size:.55rem;padding:.15rem .45rem;border-radius:2px;text-transform:uppercase;letter-spacing:.04em;}
+.badge-d{background:#f5c84220;color:var(--td);border:1px solid #f5c84235;}
+.badge-n{background:#9b8fff20;color:var(--tn);border:1px solid #9b8fff35;}
+.badge-r{background:#1a2e4260;color:var(--text3);border:1px solid var(--border);}
+.gt-pos{font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--text3);}
+
+/* ── SPRINT TIMELINE ── */
+.sprint-timeline-box{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:1rem 1.2rem;margin-bottom:1.4rem;overflow-x:auto;}
+.tl-table{display:flex;flex-direction:column;gap:3px;min-width:520px;}
+.tl-row{display:flex;align-items:center;gap:.38rem;}
+.tl-row-lbl{font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:var(--text3);width:64px;text-align:right;text-transform:uppercase;letter-spacing:.06em;flex-shrink:0;}
+.tl-cells{display:flex;flex:1;gap:2px;}
+.tl-cell{flex:1;height:24px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:.48rem;position:relative;cursor:default;}
+.tl-cell.today-c{outline:2px solid var(--orange);outline-offset:1px;z-index:2;}
+.tl-sprint{background:var(--surface2);color:var(--blue);}
+.tl-d{background:#f5c84220;color:var(--td);} .tl-n{background:#9b8fff20;color:var(--tn);} .tl-r{background:#1a2e4260;color:var(--text3);}
+.tl-day-lbl{position:absolute;bottom:-14px;font-size:.42rem;color:var(--text3);white-space:nowrap;}
+.tl-legend{display:flex;gap:1rem;flex-wrap:wrap;margin-top:1.3rem;padding-top:.7rem;border-top:1px solid var(--border);}
+.tl-leg-item{display:flex;align-items:center;gap:.35rem;font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--text2);}
+.tl-leg-dot{width:9px;height:9px;border-radius:2px;}
+
+/* ── LEADERS GRID ── */
+.leaders-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.85rem;margin-bottom:1.4rem;}
+.leader-col{border:1px solid var(--border);border-radius:4px;overflow:hidden;background:var(--surface);}
+.leader-col-header{padding:.78rem .92rem .65rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.6rem;position:relative;}
+.leader-col-header::before{content:'';position:absolute;top:0;left:0;width:100%;height:2px;}
+.ops-col .leader-col-header::before{background:var(--ops);}
+.emg-col .leader-col-header::before{background:var(--emg);}
+.seg-col .leader-col-header::before{background:var(--seg);}
+.ops-col .leader-col-header{background:var(--ops-dim);}
+.emg-col .leader-col-header{background:var(--emg-dim);}
+.seg-col .leader-col-header{background:var(--seg-dim);}
+.leader-avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.7rem;color:var(--bg);flex-shrink:0;}
+.ops-col .leader-avatar{background:var(--ops);}
+.emg-col .leader-avatar{background:var(--emg);}
+.seg-col .leader-avatar{background:var(--seg);}
+.leader-name{font-weight:600;font-size:.78rem;color:var(--white);}
+.leader-role{font-family:'IBM Plex Mono',monospace;font-size:.52rem;letter-spacing:.07em;text-transform:uppercase;margin-top:.05rem;}
+.ops-col .leader-role{color:var(--ops);} .emg-col .leader-role{color:var(--emg);} .seg-col .leader-role{color:var(--seg);}
+.leader-body{padding:.65rem;}
+
+/* ── SHIFT BOARD ── */
+.shift-board{display:grid;grid-template-columns:repeat(3,1fr);gap:.85rem;}
+.shift-col{border:1px solid var(--border);border-radius:4px;overflow:hidden;background:var(--surface);}
+.shift-col-header{padding:.65rem .92rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.ops-col .shift-col-header{background:var(--ops-dim);}
+.emg-col .shift-col-header{background:var(--emg-dim);}
+.seg-col .shift-col-header{background:var(--seg-dim);}
+.shift-col-title{font-family:'IBM Plex Mono',monospace;font-size:.58rem;letter-spacing:.09em;text-transform:uppercase;}
+.ops-col .shift-col-title{color:var(--ops);} .emg-col .shift-col-title{color:var(--emg);} .seg-col .shift-col-title{color:var(--seg);}
+.shift-col-body{padding:.65rem;max-height:460px;overflow-y:auto;}
+
+/* ── OP TASK ── */
+.op-task-card{background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:.55rem .65rem;margin-bottom:.35rem;display:flex;align-items:flex-start;gap:.48rem;transition:all .15s;position:relative;}
+.op-task-card:active{background:var(--surface3);}
+.op-check{width:16px;height:16px;border-radius:3px;border:1.5px solid var(--border2);flex-shrink:0;margin-top:.06rem;display:flex;align-items:center;justify-content:center;font-size:.56rem;cursor:pointer;min-width:16px;}
+.op-check.checked{background:var(--done);border-color:var(--done);color:var(--bg);}
+.op-info{flex:1;min-width:0;}
+.op-title{font-size:.72rem;color:var(--white);line-height:1.35;margin-bottom:.18rem;}
+.op-title.done-t{text-decoration:line-through;color:var(--text3);}
+.op-tags{display:flex;gap:.25rem;flex-wrap:wrap;}
+.op-tag{font-family:'IBM Plex Mono',monospace;font-size:.48rem;padding:.06rem .32rem;border-radius:2px;text-transform:uppercase;letter-spacing:.04em;}
+.tag-d{background:#f5c84220;color:var(--td);} .tag-n{background:#9b8fff20;color:var(--tn);}
+.tag-ab{background:#4db8e815;color:var(--blue);} .tag-rec{background:#1a3a2a;color:#4ade80;}
+.tag-urg{background:#3a1a1a;color:var(--emg);}
+.op-del{color:var(--text3);font-size:.7rem;cursor:pointer;padding:.15rem .2rem;min-width:22px;text-align:center;}
+.grupo-section{margin-bottom:.6rem;}
+.grupo-header{display:flex;align-items:center;gap:.38rem;margin-bottom:.3rem;}
+.grupo-dot{width:6px;height:6px;border-radius:50%;}
+.grupo-lbl{font-family:'IBM Plex Mono',monospace;font-size:.53rem;letter-spacing:.09em;text-transform:uppercase;}
+.origin-tag{font-family:'IBM Plex Mono',monospace;font-size:.46rem;padding:.05rem .28rem;border-radius:2px;background:var(--surface3);color:var(--text3);margin-left:auto;}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:#000000d0;z-index:200;display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;pointer-events:none;transition:opacity .2s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(--surface);border:1px solid var(--orange-mid);border-top:3px solid var(--orange);border-radius:6px;padding:1.4rem;width:100%;max-width:520px;transform:translateY(8px);transition:transform .2s;max-height:92vh;overflow-y:auto;}
+.modal-overlay.open .modal{transform:translateY(0);}
+.modal-title{font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:.1em;color:var(--white);margin-bottom:1.1rem;}
+.form-group{margin-bottom:.8rem;}
+.form-label{display:block;font-family:'IBM Plex Mono',monospace;font-size:.54rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:.3rem;}
+.form-input,.form-select,.form-textarea{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:3px;color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:.82rem;padding:.52rem .7rem;outline:none;transition:border-color .15s;min-height:40px;}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--orange);}
+.form-select option{background:var(--surface2);}
+.form-textarea{resize:vertical;min-height:60px;line-height:1.5;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:.65rem;}
+.form-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.6rem;}
+.modal-divider{height:1px;background:var(--border);margin:.9rem 0;}
+.modal-section-title{font-family:'IBM Plex Mono',monospace;font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--orange2);margin-bottom:.65rem;}
+.modal-actions{display:flex;gap:.6rem;margin-top:1.1rem;flex-wrap:wrap;}
+.btn{padding:.55rem 1.1rem;border-radius:3px;font-family:'IBM Plex Mono',monospace;font-size:.65rem;letter-spacing:.07em;text-transform:uppercase;cursor:pointer;border:none;transition:all .15s;min-height:40px;}
+.btn-primary{background:var(--orange);color:var(--bg);font-weight:600;}
+.btn-primary:active{background:var(--orange2);}
+.btn-ghost{background:none;border:1px solid var(--border2);color:var(--text2);}
+.btn-ghost:active{color:var(--white);}
+.btn-danger{background:none;border:1px solid var(--p0);color:var(--p0);margin-left:auto;}
+
+/* Delegation section inside task modal */
+.delegation-box{background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:.85rem;margin-top:.5rem;}
+.delegation-toggle{display:flex;align-items:center;gap:.6rem;cursor:pointer;margin-bottom:0;}
+.delegation-toggle input[type=checkbox]{width:15px;height:15px;accent-color:var(--orange);cursor:pointer;}
+.delegation-toggle span{font-size:.75rem;color:var(--text);}
+.delegation-fields{display:none;margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--border);}
+.delegation-fields.show{display:block;}
+
+/* ── LIDER VIEW ── */
+.lv-header{display:flex;align-items:center;gap:.9rem;margin-bottom:1.3rem;padding:.9rem 1.1rem;border-radius:4px;border:1px solid var(--border);background:var(--surface);}
+.lv-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.95rem;color:var(--bg);}
+.lv-name{font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:.1em;color:var(--white);}
+.lv-role{font-family:'IBM Plex Mono',monospace;font-size:.56rem;letter-spacing:.09em;text-transform:uppercase;margin-top:.05rem;}
+.lv-grid{display:grid;grid-template-columns:1fr 1fr;gap:.85rem;}
+.lv-section{border:1px solid var(--border);border-radius:4px;overflow:hidden;background:var(--surface);}
+.lv-sec-hdr{padding:.65rem .92rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.lv-sec-title{font-family:'IBM Plex Mono',monospace;font-size:.58rem;letter-spacing:.09em;text-transform:uppercase;color:var(--text2);}
+.lv-sec-body{padding:.65rem;max-height:440px;overflow-y:auto;}
+.empty-state{text-align:center;padding:1.8rem 1rem;color:var(--text3);font-size:.68rem;font-family:'IBM Plex Mono',monospace;}
+
+/* ── SPRINT SELECTOR ── */
+.sprint-selector{display:flex;gap:.45rem;margin-bottom:1.1rem;flex-wrap:wrap;}
+.sprint-pill{font-family:'IBM Plex Mono',monospace;font-size:.6rem;padding:.3rem .75rem;border-radius:99px;border:1px solid var(--border2);color:var(--text2);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.sprint-pill:active,.sprint-pill.active{background:var(--orange-dim);color:var(--orange2);border-color:var(--orange-mid);}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:calc(1.4rem + var(--safe-bot));right:1.4rem;background:var(--surface3);border:1px solid var(--border2);border-left:3px solid var(--orange);border-radius:4px;padding:.65rem .95rem;font-size:.7rem;color:var(--text);z-index:400;transform:translateY(14px);opacity:0;transition:all .25s;max-width:300px;}
+.toast.show{transform:translateY(0);opacity:1;}
+
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:var(--surface);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+@media(max-width:900px) and (orientation:portrait){
+  .leaders-grid,.shift-banner,.shift-board{grid-template-columns:1fr 1fr;}
+  .sprint-tasks-grid{grid-template-columns:1fr 1fr;}
+  .lv-grid{grid-template-columns:1fr;}
+}
+@media(max-width:600px){
+  .leaders-grid,.shift-banner,.shift-board,.lv-grid,.sprint-tasks-grid{grid-template-columns:1fr;}
+  .stats-row{flex-wrap:wrap;}
+  .stat-card{min-width:calc(50% - .35rem);}
+  .nav-btn{font-size:.54rem;padding:.34rem .44rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="loading-logo">TÚNEL <span>ORIENTE</span></div>
+  <div class="loading-bar"><div class="loading-fill"></div></div>
+  <div class="loading-msg" id="loadingMsg">Conectando con Firebase...</div>
+</div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="logo"><div class="logo-dot"></div>TÚNEL <span class="logo-accent">ORIENTE</span>&nbsp;·&nbsp;OPS</div>
+    <div class="sync-indicator">
+      <div class="sync-dot" id="syncDot"></div>
+      <span id="syncLabel">Offline</span>
+    </div>
+    <div class="topbar-nav">
+      <button class="nav-btn active"  onclick="showView('gerente')">Gerencia</button>
+      <button class="nav-btn" onclick="showView('sprints')">Sprints</button>
+      <button class="nav-btn" onclick="showView('lider','ops')">▶ Operación</button>
+      <button class="nav-btn" onclick="showView('lider','emg')">▶ Emergencia</button>
+      <button class="nav-btn" onclick="showView('lider','seg')">▶ Seg. Vial</button>
+      <button class="nav-btn" onclick="showView('turnos')">Turnos</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Tarea Sprint con delegación integrada -->
+<div class="modal-overlay" id="taskModal">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">Nueva Tarea de Sprint</div>
+    <div class="form-group">
+      <label class="form-label">Título de la tarea</label>
+      <input class="form-input" id="taskTitle" placeholder="Descripción de la tarea...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Descripción / Notas</label>
+      <textarea class="form-textarea" id="taskDesc" placeholder="Contexto adicional, criterios de aceptación..."></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Prioridad</label>
+        <select class="form-select" id="taskPrio">
+          <option value="P0">P0 · Crítico</option>
+          <option value="P1">P1 · Urgente</option>
+          <option value="P2" selected>P2 · Normal</option>
+          <option value="P3">P3 · Backlog</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Sprint</label>
+        <select class="form-select" id="taskSprint"></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Líder responsable</label>
+        <select class="form-select" id="taskLeader">
+          <option value="ops">Líder Operación</option>
+          <option value="emg">Líder Emergencia</option>
+          <option value="seg">Líder Seg. Vial</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Estado</label>
+        <select class="form-select" id="taskStatus">
+          <option value="todo">Por hacer</option>
+          <option value="progress">En progreso</option>
+          <option value="done">Completado</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- DELEGACIÓN A TURNO (dentro de la tarea) -->
+    <div class="modal-divider"></div>
+    <div class="delegation-box">
+      <label class="delegation-toggle">
+        <input type="checkbox" id="delegateCheck" onchange="toggleDelegation()">
+        <span>Delegar esta tarea a turno operativo</span>
+      </label>
+      <div class="delegation-fields" id="delegationFields">
+        <div class="modal-section-title">Asignación de turno</div>
+        <div class="form-row3">
+          <div class="form-group">
+            <label class="form-label">Turno</label>
+            <select class="form-select" id="delTurno">
+              <option value="dia">☀ Día 12h</option>
+              <option value="noche">☾ Noche 12h</option>
+              <option value="ambos">⊕ Ambos</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Grupo(s)</label>
+            <select class="form-select" id="delGrupo">
+              <option value="todos">A + B + C</option>
+              <option value="A">Solo A</option>
+              <option value="B">Solo B</option>
+              <option value="C">Solo C</option>
+              <option value="AB">A y B</option>
+              <option value="AC">A y C</option>
+              <option value="BC">B y C</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tipo</label>
+            <select class="form-select" id="delType">
+              <option value="recurrent">Recurrente</option>
+              <option value="urgent">Urgente</option>
+              <option value="normal">Normal</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="saveTask()">Guardar tarea</button>
+      <button class="btn btn-ghost"   onclick="closeModal('taskModal')">Cancelar</button>
+      <button class="btn btn-danger"  id="deleteTaskBtn" style="display:none" onclick="deleteTask()">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Tarea operativa directa -->
+<div class="modal-overlay" id="opModal">
+  <div class="modal">
+    <div class="modal-title">Delegar Tarea Operativa</div>
+    <div class="form-group">
+      <label class="form-label">Tarea operativa</label>
+      <input class="form-input" id="opTaskTitle" placeholder="Ej: Revisión de cámaras sector norte...">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Área</label>
+        <select class="form-select" id="opTaskArea">
+          <option value="ops">Operación</option>
+          <option value="emg">Emergencia</option>
+          <option value="seg">Seg. Vial</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Turno</label>
+        <select class="form-select" id="opTaskTurno">
+          <option value="dia">☀ Día 12h</option>
+          <option value="noche">☾ Noche 12h</option>
+          <option value="ambos">⊕ Ambos</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row3">
+      <div class="form-group">
+        <label class="form-label">Grupo(s)</label>
+        <select class="form-select" id="opTaskGrupo">
+          <option value="todos">A + B + C</option>
+          <option value="A">Solo A</option>
+          <option value="B">Solo B</option>
+          <option value="C">Solo C</option>
+          <option value="AB">A y B</option>
+          <option value="AC">A y C</option>
+          <option value="BC">B y C</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tipo</label>
+        <select class="form-select" id="opTaskType">
+          <option value="recurrent">Recurrente</option>
+          <option value="urgent">Urgente</option>
+          <option value="normal">Normal</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Prioridad</label>
+        <select class="form-select" id="opTaskPrio">
+          <option value="P0">P0 · Crítico</option>
+          <option value="P1">P1 · Urgente</option>
+          <option value="P2" selected>P2 · Normal</option>
+          <option value="P3">P3 · Rutina</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="saveOpTask()">Delegar tarea</button>
+      <button class="btn btn-ghost"   onclick="closeModal('opModal')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Nuevo Sprint -->
+<div class="modal-overlay" id="sprintModal">
+  <div class="modal">
+    <div class="modal-title" id="sprintModalTitle">Nuevo Sprint</div>
+    <div class="form-group">
+      <label class="form-label">Nombre del Sprint</label>
+      <input class="form-input" id="sprintName" placeholder="Ej: Sprint 1 — Configuración base">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Fecha inicio</label>
+        <input class="form-input" type="date" id="sprintStart">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fecha fin</label>
+        <input class="form-input" type="date" id="sprintEnd">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Estado</label>
+      <select class="form-select" id="sprintStatus">
+        <option value="upcoming">Próximo</option>
+        <option value="active">Activo</option>
+        <option value="done">Completado</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="saveSprint()">Guardar sprint</button>
+      <button class="btn btn-ghost"   onclick="closeModal('sprintModal')">Cancelar</button>
+      <button class="btn btn-danger" id="deleteSprintBtn" style="display:none" onclick="deleteSprint()">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- ══ GERENCIA ══ -->
+  <div class="view active" id="view-gerente">
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-value" id="stat-total">0</div><div class="stat-label">Tareas Sprint</div></div>
+      <div class="stat-card done-s"><div class="stat-value" id="stat-done">0</div><div class="stat-label">Completadas</div></div>
+      <div class="stat-card ops-s"><div class="stat-value" id="stat-ops">0</div><div class="stat-label">Operación</div></div>
+      <div class="stat-card emg-s"><div class="stat-value" id="stat-emg">0</div><div class="stat-label">Emergencia</div></div>
+      <div class="stat-card seg-s"><div class="stat-value" id="stat-seg">0</div><div class="stat-label">Seg. Vial</div></div>
+    </div>
+    <div class="sec-header"><div class="sec-title">Estado de Áreas · Hoy</div><div class="sec-line"></div></div>
+    <div class="shift-banner" id="shiftBanner"></div>
+    <div class="sec-header"><div class="sec-title">Ciclo de Turnos · 3 Grupos · 21 Días</div><div class="sec-line"></div></div>
+    <div class="cycle-box" id="cycleBox"></div>
+    <div class="sec-header">
+      <div class="sec-title">Sprint Timeline</div>
+      <div class="sec-line"></div>
+      <button class="btn btn-ghost" onclick="openTaskModal()" style="font-size:.58rem;padding:.28rem .7rem">+ Nueva Tarea</button>
+    </div>
+    <div class="sprint-timeline-box" id="sprintTimeline"></div>
+    <div class="sec-header"><div class="sec-title">Backlog por Líder</div><div class="sec-line"></div></div>
+    <div class="leaders-grid" id="leadersGrid"></div>
+  </div>
+
+  <!-- ══ SPRINTS ══ -->
+  <div class="view" id="view-sprints">
+    <div class="sec-header">
+      <div class="sec-title">Tablero de Sprints</div>
+      <div class="sec-line"></div>
+      <button class="btn btn-ghost" onclick="openSprintModal()" style="font-size:.58rem;padding:.28rem .7rem">+ Nuevo Sprint</button>
+      <button class="btn btn-ghost" onclick="openTaskModal()" style="font-size:.58rem;padding:.28rem .7rem">+ Nueva Tarea</button>
+    </div>
+    <div id="sprintBoard"></div>
+  </div>
+
+  <!-- ══ LIDER ══ -->
+  <div class="view" id="view-lider">
+    <div id="leaderViewContent"></div>
+  </div>
+
+  <!-- ══ TURNOS ══ -->
+  <div class="view" id="view-turnos">
+    <div class="sec-header">
+      <div class="sec-title">Tablero de Turnos Operativos</div>
+      <div class="sec-line"></div>
+      <button class="btn btn-ghost" onclick="openOpModal()" style="font-size:.58rem;padding:.28rem .7rem">+ Delegar Tarea</button>
+    </div>
+    <div class="shift-board" id="shiftBoard"></div>
+  </div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- Firebase SDK -->
+<script src="firebase-config.js"></script>
+<script type="module">
+import { initializeApp }           from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, collection, doc, addDoc, setDoc, deleteDoc,
+         onSnapshot, query, orderBy, serverTimestamp }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getAuth, signInAnonymously, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+// ════════════════════════════════════════════
+// INIT FIREBASE
+// ════════════════════════════════════════════
+const app  = initializeApp(FIREBASE_CONFIG);
+const db   = getFirestore(app);
+const auth = getAuth(app);
+
+// ════════════════════════════════════════════
+// SHIFT ENGINE
+// ════════════════════════════════════════════
+const CYCLE=['D','D','D','N','N','N','N','R','R','R','D','D','D','D','N','N','N','R','R','R','R'];
+const CYCLE_LEN=21;
+const OFFSETS={A:0,B:7,C:14};
+const ANCHOR=new Date('2025-01-06T00:00:00');
+function dfa(date){const d=new Date(date);d.setHours(0,0,0,0);return Math.floor((d-ANCHOR)/86400000);}
+function getCT(date,g){return CYCLE[((dfa(date)+OFFSETS[g])%CYCLE_LEN+CYCLE_LEN)%CYCLE_LEN];}
+function getCP(date,g){return ((dfa(date)+OFFSETS[g])%CYCLE_LEN+CYCLE_LEN)%CYCLE_LEN;}
+const TL={D:'☀',N:'☾',R:'—'}, TC={D:'tl-d',N:'tl-n',R:'tl-r'}, CC={D:'cc-d',N:'cc-n',R:'cc-r'};
+const BD={D:'badge-d',N:'badge-n',R:'badge-r'}, BL={D:'☀ Día',N:'☾ Noche',R:'⬡ Desc'};
+function fmtDate(d){return d.toLocaleDateString('es-CO',{weekday:'short',day:'numeric',month:'short'});}
+function fmtDateShort(d){return d.toLocaleDateString('es-CO',{day:'numeric',month:'short'});}
+
+// ════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════
+const LEADERS={
+  ops:{name:'Líder Operación', role:'Operations Lead', initials:'OP'},
+  emg:{name:'Líder Emergencia',role:'Emergency Lead',  initials:'EM'},
+  seg:{name:'Líder Seg. Vial', role:'Road Safety Lead',initials:'SV'}
+};
+
+let sprintTasks=[], opTasks=[], sprints=[];
+let editingTaskId=null, editingSprintId=null, currentLeader='ops';
+let unsubTasks=null, unsubOp=null, unsubSprints=null;
+
+// expose globals for onclick handlers
+window.showView=showView; window.openTaskModal=openTaskModal;
+window.openOpModal=openOpModal; window.openSprintModal=openSprintModal;
+window.saveTask=saveTask; window.saveOpTask=saveOpTask; window.saveSprint=saveSprint;
+window.deleteTask=deleteTask; window.deleteOpTask=deleteOpTask; window.deleteSprint=deleteSprint;
+window.closeModal=closeModal; window.toggleDelegation=toggleDelegation;
+window.toggleOpTask=toggleOpTask; window.toggleSprintCollapse=toggleSprintCollapse;
+
+// ════════════════════════════════════════════
+// AUTH + LISTENERS
+// ════════════════════════════════════════════
+setSyncState('syncing','Conectando...');
+
+onAuthStateChanged(auth, user => {
+  if(user){
+    setSyncState('syncing','Cargando datos...');
+    startListeners();
+  } else {
+    signInAnonymously(auth).catch(()=>{
+      setSyncState('offline','Sin conexión — modo local');
+      loadLocalFallback();
+      hideLoading();
+    });
+  }
+});
+
+function startListeners(){
+  // Sprints
+  unsubSprints = onSnapshot(
+    query(collection(db,'ops_sprints'), orderBy('createdAt','asc')),
+    snap => {
+      sprints = snap.docs.map(d=>({id:d.id,...d.data()}));
+      if(!sprints.length) seedSprints();
+      renderSprintSelects();
+      renderAll();
+    }
+  );
+  // Sprint tasks
+  unsubTasks = onSnapshot(
+    query(collection(db,'ops_sprint_tasks'), orderBy('createdAt','asc')),
+    snap => {
+      sprintTasks = snap.docs.map(d=>({id:d.id,...d.data()}));
+      renderAll();
+      setSyncState('online','En línea');
+      hideLoading();
+    }
+  );
+  // Op tasks
+  unsubOp = onSnapshot(
+    query(collection(db,'ops_op_tasks'), orderBy('createdAt','asc')),
+    snap => {
+      opTasks = snap.docs.map(d=>({id:d.id,...d.data()}));
+      renderAll();
+    }
+  );
+}
+
+async function seedSprints(){
+  const today=new Date();
+  const s1=new Date(today); s1.setDate(1);
+  const e1=new Date(s1); e1.setDate(e1.getDate()+13);
+  const s2=new Date(e1); s2.setDate(s2.getDate()+1);
+  const e2=new Date(s2); e2.setDate(e2.getDate()+13);
+  const s3=new Date(e2); s3.setDate(s3.getDate()+1);
+  const e3=new Date(s3); e3.setDate(e3.getDate()+13);
+  for(const sp of [
+    {name:'Sprint 1',start:s1.toISOString().split('T')[0],end:e1.toISOString().split('T')[0],status:'active'},
+    {name:'Sprint 2',start:s2.toISOString().split('T')[0],end:e2.toISOString().split('T')[0],status:'upcoming'},
+    {name:'Sprint 3',start:s3.toISOString().split('T')[0],end:e3.toISOString().split('T')[0],status:'upcoming'},
+  ]){
+    await addDoc(collection(db,'ops_sprints'),{...sp,createdAt:serverTimestamp()});
+  }
+}
+
+function loadLocalFallback(){
+  sprintTasks=[
+    {id:'l1',title:'Configurar protocolos de respuesta nocturna',prio:'P1',sprintId:'local-s1',leader:'ops',status:'progress',desc:''},
+    {id:'l2',title:'Actualizar manual de emergencias viales',prio:'P2',sprintId:'local-s1',leader:'emg',status:'todo',desc:''},
+    {id:'l3',title:'Auditoría puntos de control Sector Norte',prio:'P1',sprintId:'local-s1',leader:'seg',status:'progress',desc:''},
+  ];
+  sprints=[
+    {id:'local-s1',name:'Sprint 1',start:new Date().toISOString().split('T')[0],end:new Date(Date.now()+13*864e5).toISOString().split('T')[0],status:'active'},
+  ];
+  opTasks=[];
+  renderSprintSelects();
+  renderAll();
+}
+
+// ════════════════════════════════════════════
+// SYNC INDICATOR
+// ════════════════════════════════════════════
+function setSyncState(state,label){
+  const dot=document.getElementById('syncDot');
+  const lbl=document.getElementById('syncLabel');
+  dot.className='sync-dot '+state;
+  lbl.textContent=label;
+}
+function hideLoading(){
+  setTimeout(()=>document.getElementById('loadingScreen').classList.add('hidden'),600);
+}
+
+// ════════════════════════════════════════════
+// VIEWS
+// ════════════════════════════════════════════
+function showView(view,sub){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  const btns=document.querySelectorAll('.nav-btn');
+  if(view==='gerente') btns[0].classList.add('active');
+  else if(view==='sprints') btns[1].classList.add('active');
+  else if(view==='lider'){
+    currentLeader=sub;
+    ({ops:btns[2],emg:btns[3],seg:btns[4]})[sub].classList.add('active');
+    renderLeaderView(sub);
+  } else if(view==='turnos') btns[5].classList.add('active');
+  renderAll();
+}
+
+// ════════════════════════════════════════════
+// RENDER
+// ════════════════════════════════════════════
+function renderAll(){
+  renderStats(); renderShiftBanner(); renderCycleBox();
+  renderSprintTimeline(); renderLeadersGrid();
+  renderShiftBoard(); renderSprintBoard();
+}
+
+function renderStats(){
+  const t=sprintTasks;
+  document.getElementById('stat-total').textContent=t.length;
+  document.getElementById('stat-done').textContent=t.filter(x=>x.status==='done').length;
+  document.getElementById('stat-ops').textContent=t.filter(x=>x.leader==='ops').length;
+  document.getElementById('stat-emg').textContent=t.filter(x=>x.leader==='emg').length;
+  document.getElementById('stat-seg').textContent=t.filter(x=>x.leader==='seg').length;
+}
+
+function renderShiftBanner(){
+  const today=new Date();
+  const areas=[{key:'ops',label:'Operación'},{key:'emg',label:'Emergencia'},{key:'seg',label:'Seguridad Vial'}];
+  document.getElementById('shiftBanner').innerHTML=areas.map(a=>{
+    const l=LEADERS[a.key];
+    const opCount=opTasks.filter(t=>t.area===a.key&&!t.done).length;
+    const rows=['A','B','C'].map(g=>{
+      const t=getCT(today,g); const pos=getCP(today,g)+1;
+      const gc={A:'ga',B:'gb',C:'gc'};
+      return `<div class="group-today-row">
+        <span class="gt-label ${gc[g]}">GR.${g}</span>
+        <span class="gt-badge ${BD[t]}">${BL[t]}</span>
+        <span class="gt-pos">día ${pos}/21</span>
+      </div>`;
+    }).join('');
+    return `<div class="shift-card ${a.key}-card">
+      <div class="shift-area-lbl">${a.label}</div>
+      <div class="shift-leader-name">${l.name}</div>
+      <div style="font-size:.66rem;color:var(--text2);margin-bottom:.5rem">${opCount} tarea${opCount!==1?'s':''} activa${opCount!==1?'s':''}</div>
+      <div class="groups-today">${rows}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderCycleBox(){
+  const box=document.getElementById('cycleBox');if(!box)return;
+  const today=new Date();today.setHours(0,0,0,0);
+  const gc={A:'var(--ga)',B:'var(--gb)',C:'var(--gc)'};
+  const gcls={A:'ga-lbl',B:'gb-lbl',C:'gc-lbl'};
+  let html=`<div class="cycle-intro">Patrón por grupo: <strong>3D · 4N · 3R · 4D · 3N · 4R</strong> = 21 días &nbsp;·&nbsp; Desfase 7 días entre grupos &nbsp;·&nbsp; Siempre 1 Día · 1 Noche · 1 Descanso</div>`;
+  ['A','B','C'].forEach(g=>{
+    const tp=getCP(today,g);
+    let cells='';
+    for(let i=0;i<CYCLE_LEN;i++){
+      const t=CYCLE[i];
+      cells+=`<div class="cc ${CC[t]}${i===tp?' today-cell':''}" title="Día ${i+1} · Gr.${g}: ${t==='D'?'Día 12h':t==='N'?'Noche 12h':'Descanso'}">${t}<span class="cc-num">${i+1}</span></div>`;
+    }
+    html+=`<div class="cycle-group-row">
+      <div class="cycle-group-label ${gcls[g]}">
+        <span style="width:7px;height:7px;border-radius:50%;background:${gc[g]};display:inline-block"></span>Grupo ${g}
+      </div>
+      <div class="cycle-strip">${cells}</div>
+    </div>`;
+  });
+  html+=`<div class="cycle-legend">
+    <div class="cl-item"><div class="cl-dot" style="background:var(--td)"></div>Día 12h (06:00–18:00)</div>
+    <div class="cl-item"><div class="cl-dot" style="background:var(--tn)"></div>Noche 12h (18:00–06:00)</div>
+    <div class="cl-item"><div class="cl-dot" style="background:var(--tr);border:1px solid var(--border2)"></div>Descanso</div>
+    <div class="cl-item"><div class="cl-dot" style="background:var(--surface2);outline:2px solid var(--orange);outline-offset:1px"></div>Hoy</div>
+  </div>`;
+  box.innerHTML=html;
+}
+
+function renderSprintTimeline(){
+  const activeSprint=sprints.find(s=>s.status==='active')||sprints[0];
+  if(!activeSprint){document.getElementById('sprintTimeline').innerHTML='<div class="empty-state">Sin sprint activo</div>';return;}
+  const start=new Date(activeSprint.start+'T00:00:00');
+  const end=new Date(activeSprint.end+'T00:00:00');
+  const days=Math.round((end-start)/864e5)+1;
+  const today=new Date();today.setHours(0,0,0,0);
+  const WD=['Do','Lu','Ma','Mi','Ju','Vi','Sa'];
+  let hdr='',rowA='',rowB='',rowC='';
+  for(let i=0;i<days;i++){
+    const d=new Date(start);d.setDate(d.getDate()+i);
+    const isT=d.getTime()===today.getTime();
+    const tc=isT?' today-c':'';
+    hdr+=`<div class="tl-cell tl-sprint${tc}" title="${fmtDate(d)}">${d.getDate()}${i===0||i===days-1||isT?`<span class="tl-day-lbl">${WD[d.getDay()]}</span>`:''}</div>`;
+    ['A','B','C'].forEach(g=>{
+      const t=getCT(d,g);
+      const cell=`<div class="tl-cell ${TC[t]}${tc}" title="${fmtDate(d)} · Gr.${g}: ${t==='D'?'Día':t==='N'?'Noche':'Desc'}">${TL[t]}</div>`;
+      if(g==='A')rowA+=cell; if(g==='B')rowB+=cell; if(g==='C')rowC+=cell;
+    });
+  }
+  document.getElementById('sprintTimeline').innerHTML=`
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--orange2);margin-bottom:.6rem">${activeSprint.name} &nbsp;·&nbsp; ${fmtDateShort(start)} — ${fmtDateShort(end)}</div>
+  <div class="tl-table">
+    <div class="tl-row"><div class="tl-row-lbl">Días</div><div class="tl-cells">${hdr}</div></div>
+    <div class="tl-row" style="margin-top:.28rem"><div class="tl-row-lbl" style="color:var(--ga)">Grupo A</div><div class="tl-cells">${rowA}</div></div>
+    <div class="tl-row"><div class="tl-row-lbl" style="color:var(--gb)">Grupo B</div><div class="tl-cells">${rowB}</div></div>
+    <div class="tl-row"><div class="tl-row-lbl" style="color:var(--gc)">Grupo C</div><div class="tl-cells">${rowC}</div></div>
+  </div>
+  <div class="tl-legend">
+    <div class="tl-leg-item"><div class="tl-leg-dot" style="background:var(--td)"></div>☀ Día 12h</div>
+    <div class="tl-leg-item"><div class="tl-leg-dot" style="background:var(--tn)"></div>☾ Noche 12h</div>
+    <div class="tl-leg-item"><div class="tl-leg-dot" style="background:var(--tr)"></div>Descanso</div>
+    <div class="tl-leg-item"><div class="tl-leg-dot" style="background:var(--surface2);outline:2px solid var(--orange);outline-offset:0"></div>Hoy</div>
+  </div>`;
+}
+
+// ── SPRINT BOARD (vista sprints) ──
+const collapsedSprints=new Set();
+function toggleSprintCollapse(id){
+  collapsedSprints.has(id)?collapsedSprints.delete(id):collapsedSprints.add(id);
+  renderSprintBoard();
+}
+
+function renderSprintBoard(){
+  const board=document.getElementById('sprintBoard');if(!board)return;
+  if(!sprints.length){board.innerHTML='<div class="empty-state">Sin sprints creados. Haz clic en "+ Nuevo Sprint"</div>';return;}
+  const statusLabel={active:'Activo',upcoming:'Próximo',done:'Completado'};
+  const statusClass={active:'badge-active',upcoming:'badge-upcoming',done:'badge-done'};
+  board.innerHTML=sprints.map(sp=>{
+    const spTasks=sprintTasks.filter(t=>t.sprintId===sp.id);
+    const done=spTasks.filter(t=>t.status==='done').length;
+    const pct=spTasks.length?Math.round(done/spTasks.length*100):0;
+    const collapsed=collapsedSprints.has(sp.id);
+    const start=new Date(sp.start+'T00:00:00');
+    const end=new Date(sp.end+'T00:00:00');
+
+    // tasks by status columns
+    const byStatus={todo:spTasks.filter(t=>t.status==='todo'),progress:spTasks.filter(t=>t.status==='progress'),done:spTasks.filter(t=>t.status==='done')};
+    const colDefs=[
+      {key:'todo',label:'Por hacer',dot:'var(--todo)'},
+      {key:'progress',label:'En progreso',dot:'var(--progress)'},
+      {key:'done',label:'Completado',dot:'var(--done)'}
+    ];
+
+    const colsHtml=colDefs.map(c=>`
+      <div class="sprint-col">
+        <div class="sprint-col-header">
+          <div class="sprint-col-dot" style="background:${c.dot}"></div>${c.label}
+          <span style="margin-left:auto;color:var(--text3)">${byStatus[c.key].length}</span>
+        </div>
+        ${byStatus[c.key].map(t=>renderTaskCard(t)).join('')}
+        <button class="add-task-btn" onclick="openTaskModal('${['ops','emg','seg'][0]}',null,'${sp.id}')">+ Agregar tarea</button>
+      </div>`).join('');
+
+    return `<div class="sprint-block">
+      <div class="sprint-block-header" onclick="toggleSprintCollapse('${sp.id}')">
+        <div>
+          <div class="sprint-number">${sp.name}</div>
+          <div class="sprint-dates">${fmtDateShort(start)} — ${fmtDateShort(end)}</div>
+        </div>
+        <div class="sprint-progress-wrap">
+          <div class="sprint-prog-label">${done}/${spTasks.length} tareas · ${pct}%</div>
+          <div class="sprint-prog-bar"><div class="sprint-prog-fill" style="width:${pct}%"></div></div>
+        </div>
+        <span class="sprint-status-badge ${statusClass[sp.status]}">${statusLabel[sp.status]}</span>
+        <button class="btn btn-ghost" style="font-size:.55rem;padding:.22rem .55rem;min-height:28px" onclick="event.stopPropagation();openSprintModal('${sp.id}')">Editar</button>
+        <div class="sprint-toggle ${collapsed?'':'open'}">▼</div>
+      </div>
+      ${collapsed?'':`<div class="sprint-tasks-grid">${colsHtml}</div>`}
+    </div>`;
+  }).join('');
+}
+
+function renderLeadersGrid(){
+  document.getElementById('leadersGrid').innerHTML=['ops','emg','seg'].map(key=>{
+    const l=LEADERS[key];
+    const tasks=sprintTasks.filter(t=>t.leader===key);
+    return `<div class="leader-col ${key}-col">
+      <div class="leader-col-header">
+        <div class="leader-avatar">${l.initials}</div>
+        <div><div class="leader-name">${l.name}</div><div class="leader-role">${l.role}</div></div>
+      </div>
+      <div class="leader-body">
+        ${tasks.length===0?`<div class="empty-state">Sin tareas asignadas</div>`:tasks.map(renderTaskCard).join('')}
+        <button class="add-task-btn" onclick="openTaskModal('${key}')">+ Agregar tarea</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderTaskCard(t){
+  const sl={todo:'Por hacer',progress:'En progreso',done:'Completado'};
+  const lc={ops:'tl-ops',emg:'tl-emg',seg:'tl-seg'};
+  const sp=sprints.find(s=>s.id===t.sprintId);
+  const delTag=t.delegated?`<span class="task-delegation-tag">↓ ${t.delTurno==='dia'?'☀ Día':t.delTurno==='noche'?'☾ Noche':'⊕ Ambos'} · Gr.${t.delGrupo||'todos'}</span>`:'';
+  return `<div class="task-card status-${t.status}" onclick="openTaskModal('${t.leader}','${t.id}')">
+    <div class="task-top"><span class="task-prio ${t.prio.toLowerCase()}">${t.prio}</span><span class="task-title">${t.title}</span></div>
+    <div class="task-meta">
+      <span class="task-status-badge">${sl[t.status]}</span>
+      <span class="task-leader-tag ${lc[t.leader]}">${LEADERS[t.leader].initials}</span>
+      ${sp?`<span style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--text3)">${sp.name}</span>`:''}
+      ${delTag}
+    </div>
+  </div>`;
+}
+
+function renderShiftBoard(){
+  const board=document.getElementById('shiftBoard');if(!board)return;
+  const gc={A:'var(--ga)',B:'var(--gb)',C:'var(--gc)'};
+  board.innerHTML=['ops','emg','seg'].map(key=>{
+    const l=LEADERS[key];
+    // Include both standalone op tasks AND delegated sprint tasks
+    const standalone=opTasks.filter(t=>t.area===key);
+    const delegated=sprintTasks.filter(t=>t.leader===key&&t.delegated);
+    // Merge into unified list
+    const allTasks=[
+      ...standalone,
+      ...delegated.map(t=>({...t,fromSprint:true,turno:t.delTurno,grupo:t.delGrupo||'todos',type:t.delType||'normal',prio:t.prio,done:t.status==='done'}))
+    ];
+    const tD=allTasks.filter(t=>t.turno==='dia');
+    const tN=allTasks.filter(t=>t.turno==='noche');
+    const tA=allTasks.filter(t=>t.turno==='ambos');
+    function grpBlock(tasks){
+      if(!tasks.length)return'';
+      const seen=new Set();
+      const byGrp={A:[],B:[],C:[]};
+      tasks.forEach(t=>{
+        if(seen.has(t.id))return;seen.add(t.id);
+        ['A','B','C'].forEach(g=>{if(t.grupo==='todos'||t.grupo.includes(g))byGrp[g].push(t);});
+      });
+      return['A','B','C'].map(g=>byGrp[g].length?`<div class="grupo-section">
+        <div class="grupo-header">
+          <div class="grupo-dot" style="background:${gc[g]}"></div>
+          <span class="grupo-lbl" style="color:${gc[g]}">Grupo ${g}</span>
+        </div>
+        ${byGrp[g].map(t=>renderOpTask(t)).join('')}
+      </div>`:'').join('');
+    }
+    function tSec(icon,lbl,tasks){const b=grpBlock(tasks);if(!b)return'';
+      return `<div style="margin-bottom:.7rem">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;text-transform:uppercase;letter-spacing:.09em;color:var(--text3);margin-bottom:.35rem">${icon} ${lbl}</div>${b}</div>`;}
+    return `<div class="shift-col ${key}-col">
+      <div class="shift-col-header">
+        <div class="shift-col-title">${l.name}</div>
+        <button class="add-task-btn" style="width:auto;padding:.2rem .52rem;font-size:.54rem;border-style:solid;margin:0;min-height:28px" onclick="openOpModal('${key}')">+ Delegar</button>
+      </div>
+      <div class="shift-col-body">
+        ${!allTasks.length?`<div class="empty-state">Sin tareas delegadas</div>`:''}
+        ${tSec('☀','Turno Día 12h',tD)}
+        ${tSec('☾','Turno Noche 12h',tN)}
+        ${tSec('⊕','Ambos Turnos',tA)}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderOpTask(t){
+  const turnoTag=t.turno==='dia'?'<span class="op-tag tag-d">☀ Día</span>':t.turno==='noche'?'<span class="op-tag tag-n">☾ Noche</span>':'<span class="op-tag tag-ab">⊕ Ambos</span>';
+  const typeTag=t.type==='recurrent'?'<span class="op-tag tag-rec">Recurrente</span>':t.type==='urgent'?'<span class="op-tag tag-urg">Urgente</span>':'';
+  const grupoTag=t.grupo&&t.grupo!=='todos'?`<span class="op-tag" style="background:var(--surface3);color:var(--text2)">Gr.${t.grupo}</span>`:'';
+  const originTag=t.fromSprint?`<span class="origin-tag">Sprint</span>`:'';
+  const isStandalone=!t.fromSprint;
+  return `<div class="op-task-card">
+    <div class="op-check ${t.done?'checked':''}" onclick="${isStandalone?`toggleOpTask('${t.id}')`:`toggleSprintTaskDone('${t.id}')`}">${t.done?'✓':''}</div>
+    <div class="op-info">
+      <div class="op-title ${t.done?'done-t':''}">${t.title}</div>
+      <div class="op-tags">${turnoTag}${grupoTag}${typeTag}<span class="task-prio ${t.prio.toLowerCase()}" style="font-size:.46rem;padding:.05rem .28rem">${t.prio}</span>${originTag}</div>
+    </div>
+    ${isStandalone?`<div class="op-del" onclick="deleteOpTask('${t.id}')">✕</div>`:''}
+  </div>`;
+}
+
+function renderLeaderView(key){
+  const l=LEADERS[key];
+  const cm={ops:'var(--ops)',emg:'var(--emg)',seg:'var(--seg)'};
+  const bm={ops:'var(--ops-dim)',emg:'var(--emg-dim)',seg:'var(--seg-dim)'};
+  const spTasks=sprintTasks.filter(t=>t.leader===key);
+  const opT=opTasks.filter(t=>t.area===key);
+  const today=new Date();
+  const badges=['A','B','C'].map(g=>{
+    const t=getCT(today,g);
+    const gc={A:'var(--ga)',B:'var(--gb)',C:'var(--gc)'};
+    return `<span style="font-family:'IBM Plex Mono',monospace;font-size:.56rem;padding:.16rem .45rem;border-radius:2px;background:var(--surface2);color:${gc[g]}">Gr.${g} ${BL[t]}</span>`;
+  }).join('');
+  document.getElementById('leaderViewContent').innerHTML=`
+  <div class="lv-header" style="border-color:${cm[key]}40;background:${bm[key]}">
+    <div class="lv-avatar" style="background:${cm[key]};color:var(--bg)">${l.initials}</div>
+    <div><div class="lv-name">${l.name}</div><div class="lv-role" style="color:${cm[key]}">${l.role}</div></div>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:.55rem;flex-wrap:wrap">
+      <div style="display:flex;gap:.3rem">${badges}</div>
+      <button class="btn btn-ghost" style="font-size:.58rem;padding:.28rem .7rem" onclick="openTaskModal('${key}')">+ Tarea Sprint</button>
+      <button class="btn btn-ghost" style="font-size:.58rem;padding:.28rem .7rem" onclick="openOpModal('${key}')">+ Delegar Turno</button>
+    </div>
+  </div>
+  <div class="lv-grid">
+    <div class="lv-section">
+      <div class="lv-sec-hdr">
+        <div class="lv-sec-title">Mis Tareas de Sprint</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.54rem;color:var(--text3)">${spTasks.filter(t=>t.status==='done').length}/${spTasks.length}</div>
+      </div>
+      <div class="lv-sec-body">${spTasks.length===0?`<div class="empty-state">Sin tareas asignadas</div>`:spTasks.map(renderTaskCard).join('')}</div>
+    </div>
+    <div class="lv-section">
+      <div class="lv-sec-hdr">
+        <div class="lv-sec-title">Tareas Delegadas a Turnos</div>
+      </div>
+      <div class="lv-sec-body">
+        ${[...opT,...spTasks.filter(t=>t.delegated).map(t=>({...t,fromSprint:true,turno:t.delTurno,grupo:t.delGrupo||'todos',type:t.delType||'normal',done:t.status==='done'}))].length===0
+          ?`<div class="empty-state">Sin tareas delegadas</div>`
+          :[...opT,...spTasks.filter(t=>t.delegated).map(t=>({...t,fromSprint:true,turno:t.delTurno,grupo:t.delGrupo||'todos',type:t.delType||'normal',done:t.status==='done'}))].map(renderOpTask).join('')
+        }
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderSprintSelects(){
+  const sel=document.getElementById('taskSprint');
+  if(!sel)return;
+  sel.innerHTML=sprints.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+}
+
+// ════════════════════════════════════════════
+// MODALS
+// ════════════════════════════════════════════
+function toggleDelegation(){
+  const chk=document.getElementById('delegateCheck');
+  document.getElementById('delegationFields').classList.toggle('show',chk.checked);
+}
+
+function openTaskModal(leaderKey, taskId, sprintId){
+  editingTaskId=taskId||null;
+  document.getElementById('modalTitle').textContent=taskId?'Editar Tarea':'Nueva Tarea de Sprint';
+  document.getElementById('deleteTaskBtn').style.display=taskId?'':'none';
+  renderSprintSelects();
+  if(taskId){
+    const t=sprintTasks.find(x=>x.id===taskId);
+    if(t){
+      document.getElementById('taskTitle').value=t.title;
+      document.getElementById('taskDesc').value=t.desc||'';
+      document.getElementById('taskPrio').value=t.prio;
+      document.getElementById('taskSprint').value=t.sprintId||'';
+      document.getElementById('taskLeader').value=t.leader;
+      document.getElementById('taskStatus').value=t.status;
+      document.getElementById('delegateCheck').checked=!!t.delegated;
+      document.getElementById('delegationFields').classList.toggle('show',!!t.delegated);
+      if(t.delegated){
+        document.getElementById('delTurno').value=t.delTurno||'dia';
+        document.getElementById('delGrupo').value=t.delGrupo||'todos';
+        document.getElementById('delType').value=t.delType||'recurrent';
+      }
+    }
+  } else {
+    document.getElementById('taskTitle').value='';
+    document.getElementById('taskDesc').value='';
+    document.getElementById('taskPrio').value='P2';
+    if(sprintId) document.getElementById('taskSprint').value=sprintId;
+    document.getElementById('taskLeader').value=leaderKey||'ops';
+    document.getElementById('taskStatus').value='todo';
+    document.getElementById('delegateCheck').checked=false;
+    document.getElementById('delegationFields').classList.remove('show');
+  }
+  document.getElementById('taskModal').classList.add('open');
+  setTimeout(()=>document.getElementById('taskTitle').focus(),200);
+}
+
+function openOpModal(areaKey){
+  document.getElementById('opTaskTitle').value='';
+  document.getElementById('opTaskArea').value=areaKey||'ops';
+  document.getElementById('opTaskTurno').value='dia';
+  document.getElementById('opTaskGrupo').value='todos';
+  document.getElementById('opTaskType').value='recurrent';
+  document.getElementById('opTaskPrio').value='P2';
+  document.getElementById('opModal').classList.add('open');
+  setTimeout(()=>document.getElementById('opTaskTitle').focus(),200);
+}
+
+function openSprintModal(sprintId){
+  editingSprintId=sprintId||null;
+  document.getElementById('sprintModalTitle').textContent=sprintId?'Editar Sprint':'Nuevo Sprint';
+  document.getElementById('deleteSprintBtn').style.display=sprintId?'':'none';
+  if(sprintId){
+    const sp=sprints.find(s=>s.id===sprintId);
+    if(sp){
+      document.getElementById('sprintName').value=sp.name;
+      document.getElementById('sprintStart').value=sp.start;
+      document.getElementById('sprintEnd').value=sp.end;
+      document.getElementById('sprintStatus').value=sp.status;
+    }
+  } else {
+    document.getElementById('sprintName').value='';
+    const today=new Date().toISOString().split('T')[0];
+    document.getElementById('sprintStart').value=today;
+    const end=new Date(Date.now()+13*864e5).toISOString().split('T')[0];
+    document.getElementById('sprintEnd').value=end;
+    document.getElementById('sprintStatus').value='upcoming';
+  }
+  document.getElementById('sprintModal').classList.add('open');
+}
+
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+document.querySelectorAll('.modal-overlay').forEach(o=>{
+  o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});
+});
+
+// ════════════════════════════════════════════
+// FIRESTORE CRUD
+// ════════════════════════════════════════════
+async function saveTask(){
+  const title=document.getElementById('taskTitle').value.trim();
+  if(!title){showToast('Escribe el título de la tarea');return;}
+  const delegated=document.getElementById('delegateCheck').checked;
+  const payload={
+    title,
+    desc:document.getElementById('taskDesc').value.trim(),
+    prio:document.getElementById('taskPrio').value,
+    sprintId:document.getElementById('taskSprint').value,
+    leader:document.getElementById('taskLeader').value,
+    status:document.getElementById('taskStatus').value,
+    delegated,
+    delTurno:delegated?document.getElementById('delTurno').value:null,
+    delGrupo:delegated?document.getElementById('delGrupo').value:null,
+    delType:delegated?document.getElementById('delType').value:null,
+  };
+  setSyncState('syncing','Guardando...');
+  try{
+    if(editingTaskId){
+      await setDoc(doc(db,'ops_sprint_tasks',editingTaskId),{...payload,updatedAt:serverTimestamp()},{merge:true});
+      showToast('✓ Tarea actualizada');
+    } else {
+      await addDoc(collection(db,'ops_sprint_tasks'),{...payload,createdAt:serverTimestamp()});
+      showToast('✓ Tarea creada');
+    }
+    setSyncState('online','En línea');
+  }catch(e){showToast('Error al guardar: '+e.message);setSyncState('online','En línea');}
+  closeModal('taskModal');
+}
+
+async function deleteTask(){
+  if(!editingTaskId)return;
+  setSyncState('syncing','Eliminando...');
+  try{await deleteDoc(doc(db,'ops_sprint_tasks',editingTaskId));showToast('Tarea eliminada');setSyncState('online','En línea');}
+  catch(e){showToast('Error: '+e.message);}
+  closeModal('taskModal');
+}
+
+async function saveOpTask(){
+  const title=document.getElementById('opTaskTitle').value.trim();
+  if(!title){showToast('Escribe la descripción');return;}
+  const payload={
+    title,area:document.getElementById('opTaskArea').value,
+    turno:document.getElementById('opTaskTurno').value,
+    grupo:document.getElementById('opTaskGrupo').value,
+    type:document.getElementById('opTaskType').value,
+    prio:document.getElementById('opTaskPrio').value,
+    done:false,createdAt:serverTimestamp()
+  };
+  setSyncState('syncing','Guardando...');
+  try{await addDoc(collection(db,'ops_op_tasks'),payload);showToast('✓ Tarea delegada');setSyncState('online','En línea');}
+  catch(e){showToast('Error: '+e.message);}
+  closeModal('opModal');
+}
+
+async function toggleOpTask(id){
+  const t=opTasks.find(x=>x.id===id);if(!t)return;
+  try{await setDoc(doc(db,'ops_op_tasks',id),{done:!t.done,updatedAt:serverTimestamp()},{merge:true});}
+  catch(e){showToast('Error: '+e.message);}
+}
+
+async function toggleSprintTaskDone(id){
+  const t=sprintTasks.find(x=>x.id===id);if(!t)return;
+  const newStatus=t.status==='done'?'progress':'done';
+  try{await setDoc(doc(db,'ops_sprint_tasks',id),{status:newStatus,updatedAt:serverTimestamp()},{merge:true});}
+  catch(e){showToast('Error: '+e.message);}
+}
+window.toggleSprintTaskDone=toggleSprintTaskDone;
+
+async function deleteOpTask(id){
+  try{await deleteDoc(doc(db,'ops_op_tasks',id));showToast('Tarea eliminada');}
+  catch(e){showToast('Error: '+e.message);}
+}
+
+async function saveSprint(){
+  const name=document.getElementById('sprintName').value.trim();
+  if(!name){showToast('Escribe el nombre del sprint');return;}
+  const payload={
+    name,
+    start:document.getElementById('sprintStart').value,
+    end:document.getElementById('sprintEnd').value,
+    status:document.getElementById('sprintStatus').value,
+  };
+  setSyncState('syncing','Guardando...');
+  try{
+    if(editingSprintId){
+      await setDoc(doc(db,'ops_sprints',editingSprintId),{...payload,updatedAt:serverTimestamp()},{merge:true});
+      showToast('✓ Sprint actualizado');
+    } else {
+      await addDoc(collection(db,'ops_sprints'),{...payload,createdAt:serverTimestamp()});
+      showToast('✓ Sprint creado');
+    }
+    setSyncState('online','En línea');
+  }catch(e){showToast('Error: '+e.message);}
+  closeModal('sprintModal');
+}
+
+async function deleteSprint(){
+  if(!editingSprintId)return;
+  try{await deleteDoc(doc(db,'ops_sprints',editingSprintId));showToast('Sprint eliminado');}
+  catch(e){showToast('Error: '+e.message);}
+  closeModal('sprintModal');
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+// ════════════════════════════════════════════
+// PWA
+// ════════════════════════════════════════════
+let dip=null;
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+}
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();dip=e;});
+
+</script>
+</body>
+</html>
