@@ -14,11 +14,12 @@
 //
 // ══════════════════════════════════════════════════════
 
-const FIREBASE_CONFIG = {
-  apiKey:            "PEGA_TU_apiKey_AQUI",
-  authDomain:        "PEGA_TU_authDomain_AQUI",
-  projectId:         "PEGA_TU_projectId_AQUI",
-  storageBucket:     "PEGA_TU_storageBucket_AQUI",
-  messagingSenderId: "PEGA_TU_messagingSenderId_AQUI",
-  appId:             "PEGA_TU_appId_AQUI"
+const firebaseConfig = {
+  apiKey: "AIzaSyAvgsOLS6wFk99Av7u9kG8JTFB3KLhP4a8",
+  authDomain: "ops-tao-comand.firebaseapp.com",
+  projectId: "ops-tao-comand",
+  storageBucket: "ops-tao-comand.firebasestorage.app",
+  messagingSenderId: "58042981943",
+  appId: "1:58042981943:web:6eee6a8e9d7db74128e9b2",
+  measurementId: "G-D0KNXJ79V4"
 };
